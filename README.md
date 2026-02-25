@@ -49,6 +49,36 @@ claude mcp add kafka-connect \
 | Environment Variable | Default | Description |
 |---------------------|---------|-------------|
 | `KAFKA_CONNECT_URL` | `http://localhost:8083` | Kafka Connect REST API base URL |
+| `KAFKA_CONNECT_ENABLE_CREATE` | `false` | Allow `create_connector` |
+| `KAFKA_CONNECT_ENABLE_UPDATE` | `false` | Allow `update_connector_config` |
+| `KAFKA_CONNECT_ENABLE_DELETE` | `false` | Allow `delete_connector` |
+| `KAFKA_CONNECT_ENABLE_PAUSE_RESUME` | `false` | Allow `pause_connector` and `resume_connector` |
+| `KAFKA_CONNECT_ENABLE_RESTART` | `false` | Allow `restart_connector` and `restart_task` |
+| `KAFKA_CONNECT_MUTATION_ALLOWLIST` | _(empty)_ | Optional comma-separated connector allowlist for mutating operations |
+
+### Safe mode (capability-gated)
+
+This server is **read-only** by default because all mutation capabilities default to `false`.
+Mutating tools are blocked unless you explicitly enable the specific capability.
+
+Examples:
+
+Restart-only mode for selected connectors:
+
+```bash
+KAFKA_CONNECT_ENABLE_RESTART=true
+KAFKA_CONNECT_MUTATION_ALLOWLIST=payments-sink,inventory-source
+```
+
+Enable all mutating operations (for development only):
+
+```bash
+KAFKA_CONNECT_ENABLE_CREATE=true
+KAFKA_CONNECT_ENABLE_UPDATE=true
+KAFKA_CONNECT_ENABLE_DELETE=true
+KAFKA_CONNECT_ENABLE_PAUSE_RESUME=true
+KAFKA_CONNECT_ENABLE_RESTART=true
+```
 
 ## Running
 
@@ -118,11 +148,13 @@ kafka-connect-mcp/
 ├── docker-compose.yml
 ├── src/kafka_connect_mcp/
 │   ├── __init__.py
-│   └── server.py            # All MCP tools and entry point
+│   ├── safety.py            # Read-only and mutation policy gates
+│   └── server.py            # MCP tools and entry point
 └── tests/
     ├── conftest.py           # Shared fixtures (mock URL + respx router)
     ├── test_cluster.py
     ├── test_connectors.py
+    ├── test_safety.py
     ├── test_tasks.py
     └── test_plugins.py
 ```

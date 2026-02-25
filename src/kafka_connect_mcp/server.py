@@ -9,6 +9,7 @@ import os
 
 import httpx
 from fastmcp import FastMCP
+from kafka_connect_mcp.safety import enforce_mutation_allowed
 
 CONNECT_URL = os.environ.get("KAFKA_CONNECT_URL", "http://localhost:8083")
 
@@ -73,6 +74,7 @@ def create_connector(name: str, config: dict) -> dict:
     The config dict should include 'connector.class' and all required
     properties for that connector type.
     """
+    enforce_mutation_allowed(tool="create_connector", connector=name)
     with _client() as c:
         resp = c.post("/connectors", json={"name": name, "config": config})
         resp.raise_for_status()
@@ -82,6 +84,7 @@ def create_connector(name: str, config: dict) -> dict:
 @mcp.tool()
 def update_connector_config(name: str, config: dict) -> dict:
     """Update (or create) a connector's configuration. This is a full replace."""
+    enforce_mutation_allowed(tool="update_connector_config", connector=name)
     with _client() as c:
         resp = c.put(f"/connectors/{name}/config", json=config)
         resp.raise_for_status()
@@ -91,6 +94,7 @@ def update_connector_config(name: str, config: dict) -> dict:
 @mcp.tool()
 def delete_connector(name: str) -> str:
     """Delete a connector and all its tasks."""
+    enforce_mutation_allowed(tool="delete_connector", connector=name)
     with _client() as c:
         resp = c.delete(f"/connectors/{name}")
         resp.raise_for_status()
@@ -100,6 +104,7 @@ def delete_connector(name: str) -> str:
 @mcp.tool()
 def pause_connector(name: str) -> str:
     """Pause a running connector."""
+    enforce_mutation_allowed(tool="pause_connector", connector=name)
     with _client() as c:
         resp = c.put(f"/connectors/{name}/pause")
         resp.raise_for_status()
@@ -109,6 +114,7 @@ def pause_connector(name: str) -> str:
 @mcp.tool()
 def resume_connector(name: str) -> str:
     """Resume a paused connector."""
+    enforce_mutation_allowed(tool="resume_connector", connector=name)
     with _client() as c:
         resp = c.put(f"/connectors/{name}/resume")
         resp.raise_for_status()
@@ -120,6 +126,7 @@ def restart_connector(
     name: str, include_tasks: bool = False, only_failed: bool = False
 ) -> str:
     """Restart a connector. Optionally restart its tasks too."""
+    enforce_mutation_allowed(tool="restart_connector", connector=name)
     with _client() as c:
         params: dict[str, str] = {}
         if include_tasks:
@@ -146,6 +153,7 @@ def get_task_status(connector_name: str, task_id: int) -> dict:
 @mcp.tool()
 def restart_task(connector_name: str, task_id: int) -> str:
     """Restart a specific task."""
+    enforce_mutation_allowed(tool="restart_task", connector=connector_name)
     with _client() as c:
         resp = c.post(
             f"/connectors/{connector_name}/tasks/{task_id}/restart"
