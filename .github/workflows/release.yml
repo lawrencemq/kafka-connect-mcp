@@ -29,25 +29,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          current_version=$(python - <<'PY'
-          import tomllib
-          from pathlib import Path
-
-          data = tomllib.loads(Path('pyproject.toml').read_text())
-          print(data['project']['version'])
-          PY
-          )
+          current_version=$(python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
 
           previous_version=""
           if git cat-file -e HEAD^:pyproject.toml 2>/dev/null; then
-            previous_version=$(git show HEAD^:pyproject.toml | python - <<'PY'
-            import sys
-            import tomllib
-
-            data = tomllib.loads(sys.stdin.read())
-            print(data['project']['version'])
-            PY
-            )
+            previous_version=$(git show HEAD^:pyproject.toml | python -c "import sys, tomllib; print(tomllib.loads(sys.stdin.read())['project']['version'])")
           fi
 
           echo "version=${current_version}" >> "$GITHUB_OUTPUT"
