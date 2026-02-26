@@ -3,6 +3,7 @@ name = "kafka-connect-mcp"
 version = "0.1.0"
 description = "MCP server for managing Kafka Connect clusters"
 readme = "README.md"
+license = "Apache-2.0"
 authors = [
     { name = "Lawrence Weikum", email = "lawrencemq@gmail.com" }
 ]
