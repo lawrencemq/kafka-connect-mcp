@@ -1,4 +1,5 @@
 # kafka-connect-mcp
+[![Tests](https://github.com/lawrencemq/kafka-connect-mcp/actions/workflows/tests.yml/badge.svg)](https://github.com/lawrencemq/kafka-connect-mcp/actions/workflows/tests.yml)
 
 An MCP server that exposes [Kafka Connect REST API](https://docs.confluent.io/platform/current/connect/references/restapi.html) operations as tools, letting LLMs manage connectors, tasks, and plugins through natural language.
 
