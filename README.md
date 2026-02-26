@@ -140,6 +140,24 @@ uv run pytest tests/ -v
 
 Tests use [respx](https://lundberg.github.io/respx/) to mock HTTP calls to the Kafka Connect API -- no running cluster required.
 
+## Releases
+
+Releases are automated from `main`:
+
+1. Bump `project.version` in `pyproject.toml` (for example `0.1.0` -> `0.1.1`).
+2. Merge to `main`.
+3. GitHub Actions creates tag/release `vX.Y.Z`.
+4. The published release is automatically built and published to PyPI.
+
+### One-time PyPI setup
+
+Set up PyPI Trusted Publishing for project `kafka-connect-mcp`:
+
+- Owner: `lawrencemq`
+- Repository: `kafka-connect-mcp`
+- Workflow: `.github/workflows/publish-pypi.yml`
+- Environment: _(none required by this workflow)_
+
 ## Project structure
 
 ```
