@@ -155,7 +155,7 @@ Set up PyPI Trusted Publishing for project `kafka-connect-mcp`:
 
 - Owner: `lawrencemq`
 - Repository: `kafka-connect-mcp`
-- Workflow: `.github/workflows/publish-pypi.yml`
+- Workflow: `.github/workflows/release.yml`
 - Environment: _(none required by this workflow)_
 
 ## Project structure

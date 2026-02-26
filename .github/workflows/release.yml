@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   release:
@@ -59,3 +60,13 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
           generate_release_notes: true
+
+      - name: Build distributions
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+
+      - name: Publish to PyPI
+        if: steps.version.outputs.changed == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
