@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import os
 
+from urllib.parse import quote
+
 import httpx
 from fastmcp import FastMCP
 from kafka_connect_mcp.safety import enforce_mutation_allowed
@@ -18,6 +20,19 @@ mcp = FastMCP("kafka-connect", instructions="Manage Kafka Connect connectors")
 
 def _client() -> httpx.Client:
     return httpx.Client(base_url=CONNECT_URL, timeout=30)
+
+
+def _seg(value: str) -> str:
+    """Encode a value as a single URL path segment.
+
+    Prevents path traversal / endpoint injection via names such as
+    ``foo/../bar`` or ``foo/pause`` (which would otherwise bypass the
+    per-connector mutation allowlist).
+    """
+    value = str(value)
+    if not value or value in {".", ".."}:
+        raise ValueError(f"Invalid path segment: {value!r}")
+    return quote(value, safe="")
 
 
 # ── Cluster ───────────────────────────────────────────────────
@@ -44,7 +59,7 @@ def list_connectors() -> list[str]:
 def get_connector(name: str) -> dict:
     """Get connector info including config and tasks."""
     with _client() as c:
-        resp = c.get(f"/connectors/{name}")
+        resp = c.get(f"/connectors/{_seg(name)}")
         resp.raise_for_status()
         return resp.json()
 
@@ -53,7 +68,7 @@ def get_connector(name: str) -> dict:
 def get_connector_status(name: str) -> dict:
     """Get the status of a connector and all its tasks."""
     with _client() as c:
-        resp = c.get(f"/connectors/{name}/status")
+        resp = c.get(f"/connectors/{_seg(name)}/status")
         resp.raise_for_status()
         return resp.json()
 
@@ -62,7 +77,7 @@ def get_connector_status(name: str) -> dict:
 def get_connector_config(name: str) -> dict:
     """Get the configuration for a connector."""
     with _client() as c:
-        resp = c.get(f"/connectors/{name}/config")
+        resp = c.get(f"/connectors/{_seg(name)}/config")
         resp.raise_for_status()
         return resp.json()
 
@@ -86,7 +101,7 @@ def update_connector_config(name: str, config: dict) -> dict:
     """Update (or create) a connector's configuration. This is a full replace."""
     enforce_mutation_allowed(tool="update_connector_config", connector=name)
     with _client() as c:
-        resp = c.put(f"/connectors/{name}/config", json=config)
+        resp = c.put(f"/connectors/{_seg(name)}/config", json=config)
         resp.raise_for_status()
         return resp.json()
 
@@ -96,7 +111,7 @@ def delete_connector(name: str) -> str:
     """Delete a connector and all its tasks."""
     enforce_mutation_allowed(tool="delete_connector", connector=name)
     with _client() as c:
-        resp = c.delete(f"/connectors/{name}")
+        resp = c.delete(f"/connectors/{_seg(name)}")
         resp.raise_for_status()
         return f"Connector '{name}' deleted."
 
@@ -106,7 +121,7 @@ def pause_connector(name: str) -> str:
     """Pause a running connector."""
     enforce_mutation_allowed(tool="pause_connector", connector=name)
     with _client() as c:
-        resp = c.put(f"/connectors/{name}/pause")
+        resp = c.put(f"/connectors/{_seg(name)}/pause")
         resp.raise_for_status()
         return f"Connector '{name}' paused."
 
@@ -116,7 +131,7 @@ def resume_connector(name: str) -> str:
     """Resume a paused connector."""
     enforce_mutation_allowed(tool="resume_connector", connector=name)
     with _client() as c:
-        resp = c.put(f"/connectors/{name}/resume")
+        resp = c.put(f"/connectors/{_seg(name)}/resume")
         resp.raise_for_status()
         return f"Connector '{name}' resumed."
 
@@ -133,7 +148,7 @@ def restart_connector(
             params["includeTasks"] = "true"
         if only_failed:
             params["onlyFailed"] = "true"
-        resp = c.post(f"/connectors/{name}/restart", params=params)
+        resp = c.post(f"/connectors/{_seg(name)}/restart", params=params)
         resp.raise_for_status()
         return f"Connector '{name}' restarted."
 
@@ -145,7 +160,7 @@ def restart_connector(
 def get_task_status(connector_name: str, task_id: int) -> dict:
     """Get the status of a specific task for a connector."""
     with _client() as c:
-        resp = c.get(f"/connectors/{connector_name}/tasks/{task_id}/status")
+        resp = c.get(f"/connectors/{_seg(connector_name)}/tasks/{task_id}/status")
         resp.raise_for_status()
         return resp.json()
 
@@ -156,7 +171,7 @@ def restart_task(connector_name: str, task_id: int) -> str:
     enforce_mutation_allowed(tool="restart_task", connector=connector_name)
     with _client() as c:
         resp = c.post(
-            f"/connectors/{connector_name}/tasks/{task_id}/restart"
+            f"/connectors/{_seg(connector_name)}/tasks/{task_id}/restart"
         )
         resp.raise_for_status()
         return f"Task {task_id} of '{connector_name}' restarted."
@@ -180,7 +195,7 @@ def validate_connector_config(plugin_class: str, config: dict) -> dict:
     """
     with _client() as c:
         resp = c.put(
-            f"/connector-plugins/{plugin_class}/config/validate", json=config
+            f"/connector-plugins/{_seg(plugin_class)}/config/validate", json=config
         )
         return resp.json()
 
